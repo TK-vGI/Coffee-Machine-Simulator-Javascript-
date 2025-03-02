@@ -1,4 +1,4 @@
-# Coffee-Machine-Simulator-Javascript-
+# Coffee-Machine-Simulator-Javascript
 Tutorial project for JavaScript programming
 Stage 1/6: Making coffee
 Stage 2/6: Ingredient calculator
