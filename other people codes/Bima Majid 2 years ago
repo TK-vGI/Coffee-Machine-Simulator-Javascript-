@@ -1,0 +1,234 @@
+/*
+i used the constructor function to complete the coffee machine.
+I added an action to add a variant or change ingredients and see the ingredients of a certain variant.
+that way the coffee machine will be more dynamic.
+https://hyperskill.org/projects/220/stages/1106/implement#solutions-2395803
+*/
+const input = require('sync-input');
+
+function CoffeeMachine(
+  {
+    water = 0,
+    milk = 0,
+    coffeeBeans = 0,
+    cups = 0,
+    money = 0,
+  }
+) {
+  this.water = water;
+  this.milk = milk;
+  this.coffeeBeans = coffeeBeans;
+  this.cups = cups;
+  this.money = money;
+  this.ingredients = {
+    Espresso: {
+      water: 250,
+      milk: 0,
+      coffeeBeans: 16,
+      cups: 1,
+      price: 4,
+    },
+    Latte: {
+      water: 350,
+      milk: 75,
+      coffeeBeans: 20,
+      cups: 1,
+      price: 7,
+    },
+    Cappuccino: {
+      water: 200,
+      milk: 100,
+      coffeeBeans: 12,
+      cups: 1,
+      price: 6,
+    }
+  };
+
+  this.checkPoint = () => {
+    return {
+      water: this.water,
+      milk: this.milk,
+      coffeeBeans: this.coffeeBeans,
+      cups: this.cups,
+      money: this.money,
+    }
+  }
+
+  this.rollBack = (
+    {
+      water,
+      milk,
+      coffeeBeans,
+      cups,
+      money,
+    }
+  ) => {
+    this.water = water;
+    this.milk = milk;
+    this.coffeeBeans = coffeeBeans;
+    this.cups = cups;
+    this.money = money;
+  }
+
+  this.getVariants = () => {
+    return Object.fromEntries(Object.entries(Object.keys(this.ingredients)));
+  }
+
+  this.getIngredient = (variantName) => {
+    return this.ingredients[variantName];
+  }
+
+  this.printInfoMachine = () => {
+    console.log('The coffee machine has:');
+    console.log(`${this.water} ml of water`);
+    console.log(`${this.milk} ml of milk`);
+    console.log(`${this.coffeeBeans} g of coffee beans`);
+    console.log(`${this.cups} disposable cups`);
+    console.log(`${this.money} of money`);
+  }
+
+  this.getStringMenu = () => {
+    const variants = this.getVariants();
+    let result = ''
+
+    for (const key in variants) {
+      result += `${key} - ${variants[key]} \n`
+    }
+
+    return result;
+  }
+
+  this.refill = () => {
+    this.water += parseInt(input('Write how many ml of water you want to add: ')) || 0;
+    this.milk += parseInt(input('Write how many ml of milk you want to add: ')) || 0;
+    this.coffeeBeans += parseInt(input('Write how many ml of coffee beans you want to add: ')) || 0;
+    this.cups += parseInt(input('Write how many ml of disposable cups you want to add: ')) || 0;
+  }
+
+  this.createOrUpdateVariant = () => {
+    const nameVariant = input('Write name variant you want to add or update: ').trim();
+    const water = parseInt(input(`How many ml of water for ${nameVariant}: `));
+    const milk = parseInt(input(`How many ml of milk for ${nameVariant}: `));
+    const coffeeBeans = parseInt(input(`How many ml of coffee beans for ${nameVariant}: `));
+    const price = parseInt(input(`how much does a cup of ${nameVariant} cost: `));
+
+    this.ingredients[nameVariant] = {
+      water,
+      milk,
+      coffeeBeans,
+      cups: 1,
+      price,
+    };
+  }
+
+  this.makeCoffee = (variant = '') => {
+    this.water -= this.ingredients[variant].water;
+    this.milk -= this.ingredients[variant].milk;
+    this.coffeeBeans -= this.ingredients[variant].coffeeBeans;
+    this.cups -= this.ingredients[variant].cups;
+    this.money += this.ingredients[variant].price;
+  }
+
+  this.checkStock = () => {
+    if (this.cups < 0) {
+      console.log('Sorry, not enough cups!')
+      return false;
+    }
+    if (this.milk < 0) {
+      console.log('Sorry, not enough milk!')
+      return false;
+    }
+    if (this.coffeeBeans < 0) {
+      console.log('Sorry, not enough coffeeBeans!')
+      return false;
+    }
+    if (this.water < 0) {
+      console.log('Sorry, not enough water!')
+      return false;
+    }
+
+    return true;
+  }
+
+  this.buy = (variant = '') => {
+    if (['', null, false, undefined].includes(variant)) {
+      console.log('variant is not valid!')
+      return;
+    }
+    this.makeCoffee(variant);
+  }
+
+  this.checkoutMoney = () => {
+    console.log(`I gave you $${this.money}`);
+    this.money = 0;
+  }
+
+  this.start = () => {
+    const checkPointData = this.checkPoint();
+    console.log('');
+    const action = input('Write action (buy, fill, add variant, ingredient, take, remaining, exit): ');
+    switch (action.trim()) {
+      case 'buy':
+        console.log('');
+        const chooseVariant = parseInt(input(`What do you want to buy?\n${this.getStringMenu()}> `));
+
+        this.buy(this.getVariants()[chooseVariant]);
+
+        if (!this.checkStock()) {
+          this.rollBack(checkPointData);
+        } else {
+          console.log('I have enough resources, making you a coffee!');
+        }
+
+        break
+
+      case 'fill':
+        console.log('');
+        this.refill();
+        break;
+
+      case 'add variant':
+        this.createOrUpdateVariant();
+        break;
+
+      case 'ingredient':
+        console.log(this.getStringMenu());
+
+        const selectIngredient = input('type in the variant you want to see the ingredients: ');
+        const ingredient = this.getIngredient(this.getVariants()[selectIngredient]);
+
+        console.log(ingredient);
+        break;
+
+      case 'take':
+        this.checkoutMoney()
+        break;
+
+      case 'remaining':
+        this.printInfoMachine();
+        break;
+
+      case 'exit':
+        return;
+
+      default:
+        console.log('Action not define!');
+        break;
+
+    }
+    this.start();
+  }
+}
+
+function main() {
+  const coffeeMachine = new CoffeeMachine({
+    water: 400,
+    milk: 540,
+    coffeeBeans: 120,
+    cups: 9,
+    money: 550,
+  });
+  coffeeMachine.start();
+}
+
+main();

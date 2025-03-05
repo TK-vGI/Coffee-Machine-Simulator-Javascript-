@@ -1,0 +1,161 @@
+/*
+Used classes for coffee machine and recipes + added a new drink
+https://hyperskill.org/projects/220/stages/1106/implement#solutions-2352536
+*/
+const input = require('sync-input');
+
+class CoffeeMachine {
+    constructor(
+        water,
+        milk,
+        coffee,
+        cost,
+        cups
+    ) {
+        this.water = water;
+        this.milk = milk;
+        this.coffee = coffee;
+        this.cost = cost;
+        this.cups = cups;
+    }
+
+    buy(recipe) {
+        this.water -= recipe.water;
+        this.milk -= recipe.milk;
+        this.coffee -= recipe.coffee;
+        this.cups--;
+        this.cost += recipe.cost;
+    }
+
+    fill(water, milk, coffee, cups) {
+        this.water += water;
+        this.milk += milk;
+        this.coffee += coffee;
+        this.cups += cups;
+    }
+
+    displayRemaining() {
+        return `\nThe coffee machine has:
+${this.water} ml of water
+${this.milk} ml of milk
+${this.coffee} g of coffee beans
+${this.cups} disposable cups
+$${this.cost} of money`;
+    }
+}
+
+class Recipe {
+    constructor(
+        id,
+        name,
+        water,
+        milk,
+        coffee,
+        cost
+    ) {
+        this.id = id;
+        this.name = name;
+        this.water = water;
+        this.milk = milk;
+        this.coffee = coffee;
+        this.cost = cost;
+    }
+}
+
+main();
+
+function main() {
+    let recipes = getRecipes();
+    let coffeeMachine = getCoffeeMachine();
+    let command;
+
+    do {
+        command = input(`Write action (buy, fill, take, remaining, exit):\n`);
+        switch (command) {
+            case "buy":
+                commandBuy(coffeeMachine, recipes);
+                console.log("");
+                break;
+            case "fill":
+                commandFill(coffeeMachine);
+                console.log("");
+                break;
+            case "take":
+                commandTake(coffeeMachine);
+                console.log("");
+                break;
+            case "remaining":
+                commandRemaining(coffeeMachine);
+                console.log("");
+                break;
+        }
+    } while (command !== "exit");
+}
+
+function getCoffeeMachine() {
+    return new CoffeeMachine(400, 540, 120, 550, 9);
+}
+
+function getRecipes() {
+    return [
+        new Recipe(1, "espresso", 250, 0, 16, 4),
+        new Recipe(2, "latte", 350, 75, 20, 7),
+        new Recipe(3, "cappuccino", 200, 100, 12, 6),
+        new Recipe(4, "flat white", 100, 150, 32, 8),
+    ];
+}
+
+function commandBuy(coffeeMachine, recipes) {
+    let recipeOptions = [];
+    recipes.forEach(recipe => recipeOptions.push(`${recipe.id} - ${recipe.name}`));
+    let menuInput = input(`\nWhat do you want to buy? ${recipeOptions.join(", ")}, back - to main menu:\n`);
+
+    if (menuInput === "back") {
+        return;
+    }
+
+    let recipe = recipes.find(recipe => recipe.id === Number(menuInput));
+
+    let waterCups = Math.floor(coffeeMachine.water / recipe.water);
+    let milkCups = Math.floor(coffeeMachine.milk / recipe.milk);
+    let coffeeCups = Math.floor(coffeeMachine.coffee / recipe.coffee);
+    let cups = coffeeMachine.cups;
+
+    if (Math.min(waterCups, milkCups, coffeeCups, cups) >= 1) {
+        coffeeMachine.buy(recipe);
+        console.log(`I have enough resources, making you a coffee!`);
+    } else {
+        if (waterCups < 1) {
+            console.log(`Sorry, not enough water!`);
+        }
+        if (milkCups < 1) {
+            console.log(`Sorry, not enough milk!`);
+        }
+        if (coffeeCups < 1) {
+            console.log(`Sorry, not enough coffee beans!`);
+        }
+        if (cups < 1) {
+            console.log(`Sorry, not enough cups!`);
+        }
+    }
+}
+
+function commandFill(coffeeMachine) {
+    let waterInput = Number(input(`\nWrite how many ml of water you want to add:\n`));
+    let milkInput = Number(input(`Write how many ml of milk you want to add:\n`));
+    let coffeeInput = Number(input(`Write how many grams of coffee beans you want to add:\n`));
+    let cupsInput = Number(input(`Write how many disposable cups you want to add:\n`));
+
+    coffeeMachine.fill(waterInput, milkInput, coffeeInput, cupsInput);
+}
+
+function commandTake(coffeeMachine) {
+    let message = `\nI gave you $${coffeeMachine.cost}`;
+    coffeeMachine.cost = 0;
+
+    console.log(message);
+}
+
+function commandRemaining(coffeeMachine) {
+    console.log(coffeeMachine.displayRemaining());
+}
